@@ -16,7 +16,7 @@ void setup()
 {
   pinMode(LED, OUTPUT);
   // right.begin(9600);
-  left.begin(115200);
+  left.begin(230400);
   tft.init(240, 320); // Init ST7789 320x240
   tft.setSPISpeed(60000000);
   tft.fillScreen(ST77XX_BLACK);
@@ -40,5 +40,5 @@ void loop()
     tft.setTextColor(ST77XX_WHITE);
     tft.print((int) b, HEX);
   }
-  delay(10);
+  // delay(10);
 }

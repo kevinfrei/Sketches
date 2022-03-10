@@ -11,7 +11,7 @@ void setup()
 { 
   pinMode(LED_RED, OUTPUT);
   pinMode(LED_BLUE, OUTPUT); 
-  queen.begin(115200);
+  queen.begin(230400);
   /*
    pinMode(PIN_SERIAL1_RX, INPUT_PULLUP);
    pinMode(PIN_SERIAL1_TX, OUTPUT);
