@@ -32,13 +32,13 @@ void loop()
   unsigned int now = millis();
   while (left.available()) {
     unsigned char b = left.read();
-    int x = (240 - w) / 2;
-    unsigned int y = (now / 200) % 280;
     tft.fillRect(x1, y1, w, h, ST77XX_BLACK);
-    tft.getTextBounds("00", x, y, &x1, &y1, &w, &h);
+    uint16_t x = (micros() * now) % 223;
+    uint16_t y = (micros() * x) % 307;
+    tft.getTextBounds("000", x, y, &x1, &y1, &w, &h);
     tft.setCursor(x, y);
-    tft.setTextColor(ST77XX_WHITE);
-    tft.print((int) b, HEX);
+    tft.setTextColor((micros() ^ millis()) & 0xFFFF);
+    tft.print((int) b);
   }
   // delay(10);
 }
