@@ -19,55 +19,57 @@ void setup()
   left.begin(1 << 20); // Run at 1Mbps
   tft.init(240, 320); // Init ST7789 320x240
   tft.setSPISpeed(60000000);
+  tft.setRotation(1);
   tft.fillScreen(ST77XX_BLACK);
   digitalWrite(LED, HIGH);
 }
 
 unsigned int last = 0;
+ struct bounds {
+  int16_t x, y;
+  uint16_t w, h;
+} ;
+
+void drawByte(unsigned char b, uint32_t now, uint16_t x_offset, struct bounds *db) {
+  uint8_t sc = b / 3;
+  uint8_t mod = b % 3;
+  uint16_t color = ST77XX_YELLOW;
+  if (sc % 3 != mod) {
+    tft.fillRect(105 + x_offset, 210, 55, 30, ST77XX_BLACK);
+    tft.setCursor(105 + x_offset, 210);
+    tft.setTextColor(ST77XX_RED);
+    tft.print((int)b);
+    color = ST77XX_WHITE;
+  } else {
+    uint16_t color = (sc < 36) ? ST77XX_RED : ST77XX_GREEN;
+    uint8_t val = sc % 36;
+    tft.fillRect((5 - (val % 6)) * 25 + 1 + x_offset, (val / 6) * 25, 23, 23, color);
+  }
+  tft.fillRect(db->x, db->y, db->w, db->h, ST77XX_BLACK);
+  uint16_t x = 80 + x_offset;
+  uint16_t y = 180;
+  tft.getTextBounds("000", x, y, &db->x, &db->y, &db->w, &db->h);
+  tft.setCursor(x, y);
+  tft.setTextColor(ST77XX_WHITE);
+  tft.print((int) b);
+  tft.fillRect(80 + x_offset, 210, 100, 30, ST77XX_BLACK);
+  tft.setCursor(80 + x_offset, 210);
+  tft.setTextColor(color);
+  tft.print(now);
+}
 
 void loop()
 {
-  static int16_t lx1 = 0, ly1 = 0, rx1 = 0, ry1 = 0;
-  static uint16_t lw = 1, lh = 1, rw = 1, rh = 1;
   unsigned int now = millis();
-  /*
+  static bounds lb, rb;
   if (left.available()) {
     unsigned char b = left.read();
-    tft.fillRect(lx1, ly1, lw, lh, ST77XX_BLACK);
-    uint16_t x = (micros() * now) % 223;
-    uint16_t y = (micros() * x) % 157;
-    tft.getTextBounds("000", x, y, &lx1, &ly1, &lw, &lh);
-    tft.setCursor(x, y);
-    tft.setTextColor((micros() ^ millis()) & 0xFFFF);
-    tft.print((int) b);
+    if (b)
+      drawByte(b - 1, now, 0, &lb);
   }
-  */
   if (right.available()) {
     unsigned char b = right.read();
-    uint8_t sc = b / 3;
-    uint8_t mod = b % 3;
-    uint16_t color = ST77XX_YELLOW;
-    if (sc % 3 != mod) {
-      tft.fillRect(185, 290, 55, 30, ST77XX_BLACK);
-      tft.setCursor(185, 310);
-      tft.setTextColor(ST77XX_RED);
-      tft.print((int)b);
-      color = ST77XX_WHITE;
-    } else {
-      uint16_t color = (sc < 36) ? ST77XX_RED : ST77XX_GREEN;
-      tft.fillRect((sc % 6) * 5 + 1, 160 + (sc / 6) * 5, 3, 3, color);
-    }
-    tft.fillRect(rx1, ry1, rw, rh, ST77XX_BLACK);
-    uint16_t x = 120;
-    uint16_t y = 240;
-    tft.getTextBounds("000", x, y, &rx1, &ry1, &rw, &rh);
-    tft.setCursor(x, y);
-    tft.setTextColor(ST77XX_WHITE);
-    tft.print((int) b);
-    tft.fillRect(80, 290, 100, 30, ST77XX_BLACK);
-    tft.setCursor(80, 310);
-    tft.setTextColor(color);
-    tft.print(now);
+    if (b)
+      drawByte(b - 1, now, 160, &rb);
   }
-  delay(125);
 }
