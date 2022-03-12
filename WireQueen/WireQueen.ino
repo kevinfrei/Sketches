@@ -69,5 +69,5 @@ void loop()
     tft.setTextColor(color);
     tft.print(now);
   }
-  delay(500);
+  delay(125);
 }
