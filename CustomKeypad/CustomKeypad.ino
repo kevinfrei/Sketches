@@ -12,6 +12,11 @@ byte rowPins[ROWS] = {A1, A0, A2, 10, 11, 13}; //connect to the row pinouts of t
 uint32_t last_change[COLS * ROWS] = {0};
 bool pressed[COLS * ROWS] = {0};
 const uint32_t debounce_time = 15;
+const uint16_t write_delay_usec = 350;
+
+uint8_t write_transform(uint8_t val) {
+  return val * 3 + val % 3 + 1;
+}
 
 void setup(){
   Serial.begin(9600);
@@ -35,16 +40,15 @@ void loop(){
   analogWrite(LED_BLUE, (now & 0x400) ? 0 : 0x18);
   for (uint8_t c = 0 ; c < COLS; c++) {
     digitalWrite(colPins[c], LOW);
-    delay(1);
+    delayMicroseconds(write_delay_usec);
     for (uint8_t r = 0; r < ROWS; r++) {
-      delay(1);
       bool p = digitalRead(rowPins[r]) == LOW;
-      if (p != pressed[r * 6 + c] && last_change[r * 6 + c] < now + debounce_time) {
-        uint8_t val = r * 6 + c + (p ? 0 : 36);
-        Serial1.write((unsigned char)(val * 3 + val % 3 + 1));
-        digitalWrite(LED_RED, p ? HIGH : LOW);
-        pressed[r * 6 + c] = p;
-        last_change[r * 6 + c] = now;
+      if (p != pressed[r * COLS + c] && last_change[r * COLS + c] < now + debounce_time) {
+        uint8_t val = r * COLS + c + (p ? 0 : ROWS * COLS);
+        Serial1.write(write_transform(val));
+        // digitalWrite(LED_RED, p ? HIGH : LOW);
+        pressed[r * COLS + c] = p;
+        last_change[r * COLS + c] = now;
       }
     }
     digitalWrite(colPins[c], HIGH);
