@@ -42,7 +42,8 @@ void setup(void) {
 
   // Initialize 1.8" TFT
   tft.init(240, 320);  // initialize a ST7735S chip, black tab
-  tft.setSPISpeed(72000000);
+  tft.setSPISpeed(60000000);
+  // tft.setRotation(3); If you set this to 1/3, use "landscape.bmp" instead of "portrait.bmp"
   Serial.println("OK!");
   tft.fillScreen(ST77XX_BLACK);
 }
@@ -104,7 +105,7 @@ void loop() {
       Serial.println("failed!");
       return;
     }
-    bmpDraw("purple.bmp", 0, 0);
+    bmpDraw("portrait.bmp", 0, 0);
   }
   delay(16);
 }
