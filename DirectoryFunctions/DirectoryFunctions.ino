@@ -118,7 +118,10 @@ void setup() {
   if (!sd.rmdir("Folder1")) {
     error("rmdir for Folder1 failed\n");
   }
+<<<<<<< HEAD
 
+=======
+>>>>>>> dd1667e (DirFuncs.ino)
   cout << F("\nFolder1 removed.\n");
   cout << F("\nList of files on the SD.\n");
   sd.ls(LS_R);
