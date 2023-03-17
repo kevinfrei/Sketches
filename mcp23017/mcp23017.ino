@@ -1,73 +1,85 @@
-#include <MCP23017.h>
+#include <Adafruit_MCP23X17.h>
 #include <Wire.h>
 
-MCP23017 MCP(0x20);
+Adafruit_MCP23X17 mcp1;
+Adafruit_MCP23X17 mcp2;
 
-#define I2C_CLOCK_SPEED 100000
+// "Fast" mode. MCP23017 docs say it supports up to 1.7MHz...
+// Teensy 3.2 supports upt to 1MHz
+#define I2C_CLOCK_SPEED 1000000 
+#define ADDR1 0x24
+#define ADDR2 0x27
+#define PINA 8
+#define PINB 0
+
+bool success1 = false;
+bool success2 = false;
+#define ON HIGH
+#define OFF LOW
+
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.begin(115200);
   delay(2000);
-  Serial.begin(115200*8);
-  Serial.print("MCP23017_test version: ");
-  Serial.println(MCP23017_LIB_VERSION);
 
+  Serial.println("MCP23017_test");
+  
   Wire.setClock(I2C_CLOCK_SPEED);
   Wire.begin();
   Wire.setClock(I2C_CLOCK_SPEED);
-  MCP.begin();
-  Serial.print("Begin error: ");
-  Serial.println(MCP.lastError());
-  for (int pin = 0; pin < 16; pin++) {
-    MCP.pinMode(pin, pin < 8 ? INPUT_PULLUP : OUTPUT);
-    Serial.print("Last error: ");
-    Serial.println(MCP.lastError());
+  
+  success1 = mcp1.begin_I2C(ADDR1, &Wire);
+  success2 = mcp2.begin_I2C(ADDR2, &Wire);
+  
+  if (!success1) {
+    Serial.println("MCP1 Begin failed");
   }
-  Serial.print("isConnected: ");
-  Serial.println(MCP.isConnected());
-  while (!MCP.isConnected()) {
-    delay(1000);
-    MCP.begin();
-    Serial.print("Begin error: ");
-    Serial.println(MCP.lastError());    
+  if (!success2) {
+    Serial.println("MCP2 Begin failed");
+  }
+  if (success1) {
+    mcp1.pinMode(PINA, INPUT_PULLUP);
+    mcp1.pinMode(PINB, OUTPUT);
+    mcp1.digitalWrite(PINB, OFF);
+  }
+  if (success2) {
+    mcp2.pinMode(PINB, INPUT_PULLUP);
+    mcp2.pinMode(PINA, OUTPUT);
+    mcp2.digitalWrite(PINA, OFF);   
   }
 }
 
-void loop()
-{
-  // Serial.println("  01234567");
-  uint64_t res = 0;
-  uint8_t pos = 0;
-  uint32_t now = millis();
-  for (int opin = 8; opin < 16; opin++) {
-    MCP.digitalWrite(opin, LOW);
-    //delay(10);
-    //Serial.print(opin-8);
-    //Serial.print(":");
-    
-    for (int ipin = 0; ipin < 8; ipin++) {
-      int val = !MCP.digitalRead(ipin);
-      if (val) {
-        res = res | (1ULL << pos);
-      } else {
-        res = res & ~(1ULL << pos);
-      }
-      pos++;
-      //Serial.print(val);
-    }
-    MCP.digitalWrite(opin, HIGH);
-    //delay(10);
+void handlePair(Adafruit_MCP23X17 &mcp, uint8_t in, uint8_t out) {
+  mcp.digitalWrite(out, ON);
+  delay(5);
+  Serial.print(mcp.digitalRead(in) ? "T" : "F");
+  Serial.print(in);
+  delay(5);
+  mcp2.digitalWrite(out, OFF);
+  delay(5);
+  Serial.print(mcp.digitalRead(in) ? "-t" : "-f");
+  Serial.println(in);
+  delay(5);  
+}
+
+uint32_t last = 0;
+void loop() {
+  if (last == (millis() & 0x400)) {
+    return;
   }
-  uint32_t time = millis() - now;
+  last = millis() & 0x400;
+  digitalWrite(LED_BUILTIN, last ? HIGH : LOW);    
+  if (!success1 && !success2) {
+    return;
+  }
   Serial.print("Time: ");
-  Serial.print(time);
-  Serial.print(" Data: ");
-  Serial.println(res);
-  delay(10);
+  Serial.println(millis() >> 10);
+  if (success2) {
+    handlePair(mcp2, PINA, PINB);
+  }
+  if (success1) {
+    handlePair(mcp1, PINB, PINA);
+  }
 }
-
-// void loop() {
-  // put your main code here, to run repeatedly:
-  //digitalWrite(LED_BUILTIN, ((millis() & 512) == 0) ? HIGH : LOW); 
-  //Serial.printf("time: %d\n", millis());
-//}
